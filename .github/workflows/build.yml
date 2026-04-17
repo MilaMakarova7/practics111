@@ -4,8 +4,22 @@ on:
       - main
 
 jobs:
-  build:
+  secrets-scan:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks Scan
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/code \
+            zricethezav/gitleaks:latest detect \
+            --source="/code" --no-git -v
+  build:
+    needs: [ secrets-scan ]
+      runs-on: ubuntu-latest
     container:
       image: eclipse-temurin:21-jdk
     steps:
