@@ -184,3 +184,47 @@ jobs:
         with:
           name: zap-api-report
           path: zap-api-report.html
+  web-fuzzing:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download jar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jar-artifact
+          path: ./target
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Install ffuf
+        run: |
+          wget https://github.com/ffuf/ffuf/releases/download/v2.1.0/ffuf_2.1.0_linux_amd64.tar.gz
+          tar -xzf ffuf_2.1.0_linux_amd64.tar.gz
+          sudo mv ffuf /usr/local/bin/
+
+      - name: Start application
+        run: |
+          java -jar ./target/*.jar &
+          sleep 45
+
+      - name: Create wordlist
+        run: |
+          printf "login\nregister\ncourses\nstudents\nadmin\nxml\nconfig\napi\nuser\npassword\nroot" > wordlist.txt
+
+      - name: Run Fuzzing Test
+        run: |
+          ffuf -u http://localhost:8080/api/FUZZ -w wordlist.txt -mc all -o fuzz-report.json
+
+      - name: Upload fuzzing report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fuzz-report
+          path: fuzz-report.json
