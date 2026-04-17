@@ -19,7 +19,7 @@ jobs:
             --source="/code" --no-git -v
   build:
     needs: [ secrets-scan ]
-      runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
     container:
       image: eclipse-temurin:21-jdk
     steps:
